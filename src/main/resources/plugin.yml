@@ -1,0 +1,5 @@
+name: AdasPluginLib
+version: '${project.version}'
+main: czescjestemadas.adaspluginlib.AdasPluginLib
+author: czescjestemadas
+api-version: '1.19'
