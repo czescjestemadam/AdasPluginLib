@@ -36,7 +36,9 @@ public abstract class Config
 
 			try
 			{
-				field.set(this, config.get(path));
+				final Object value = config.get(path);
+				final ValueLoader valueLoader = field.getAnnotation(ValueLoader.class);
+				field.set(this, valueLoader == null ? value : valueLoader.value().load(value));
 			}
 			catch (IllegalAccessException e)
 			{
@@ -56,7 +58,8 @@ public abstract class Config
 			try
 			{
 				final Object value = field.get(this);
-				config.set(path, value);
+				final ValueLoader valueLoader = field.getAnnotation(ValueLoader.class);
+				config.set(path, valueLoader == null ? value : valueLoader.value().save(value));
 
 				final Comment comment = field.getAnnotation(Comment.class);
 				if (comment != null)
