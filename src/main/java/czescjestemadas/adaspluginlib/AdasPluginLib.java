@@ -1,6 +1,8 @@
 package czescjestemadas.adaspluginlib;
 
+import czescjestemadas.adaspluginlib.command.ICommand;
 import czescjestemadas.adaspluginlib.gui.GuiManager;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,6 +39,21 @@ public final class AdasPluginLib extends JavaPlugin
 	public static AdasPluginLib get()
 	{
 		return INST;
+	}
+
+	public static void registerCommands(JavaPlugin plugin, ICommand... commands)
+	{
+		for (ICommand command : commands)
+		{
+			final PluginCommand pluginCommand = plugin.getCommand(command.getName());
+			if (pluginCommand == null)
+			{
+				plugin.getSLF4JLogger().error("command {} is not registered", command.getName());
+				continue;
+			}
+			pluginCommand.setExecutor(command);
+			pluginCommand.setTabCompleter(command);
+		}
 	}
 
 	public static void registerListeners(Plugin plugin, Listener... listeners)
