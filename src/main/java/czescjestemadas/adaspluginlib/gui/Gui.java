@@ -2,6 +2,8 @@ package czescjestemadas.adaspluginlib.gui;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -24,6 +26,19 @@ public abstract class Gui implements InventoryHolder
 
 	public void onClose()
 	{
+	}
+
+	public void onClick(InventoryClickEvent e)
+	{
+		if (locked)
+			e.setCancelled(true);
+
+		final GuiItem guiItem = getGuiItem(e.getSlot());
+		if (guiItem.isLocked())
+			e.setCancelled(true);
+
+		if (guiItem instanceof GuiButton button)
+			button.click((Player)e.getWhoClicked(), e.getClick());
 	}
 
 	@Override

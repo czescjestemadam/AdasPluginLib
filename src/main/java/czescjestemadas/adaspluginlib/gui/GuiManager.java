@@ -1,7 +1,6 @@
 package czescjestemadas.adaspluginlib.gui;
 
 import czescjestemadas.adaspluginlib.AdasPluginLib;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -38,18 +37,8 @@ public final class GuiManager implements Listener
 	private void onClick(InventoryClickEvent e)
 	{
 		final Inventory inventory = e.getClickedInventory();
-		if (inventory == null || !(inventory.getHolder() instanceof Gui gui))
-			return;
-
-		if (gui.isLocked())
-			e.setCancelled(true);
-
-		final GuiItem guiItem = gui.getGuiItem(e.getSlot());
-		if (guiItem.isLocked())
-			e.setCancelled(true);
-
-		if (guiItem instanceof GuiButton button)
-			button.click((Player)e.getWhoClicked(), e.getClick());
+		if (inventory != null && inventory.getHolder() instanceof Gui gui)
+			gui.onClick(e);
 	}
 
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
