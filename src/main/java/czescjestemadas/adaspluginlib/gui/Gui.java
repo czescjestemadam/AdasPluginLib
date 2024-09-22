@@ -34,6 +34,9 @@ public abstract class Gui implements InventoryHolder
 			e.setCancelled(true);
 
 		final GuiItem guiItem = getGuiItem(e.getSlot());
+		if (guiItem == null)
+			return;
+
 		if (guiItem.isLocked())
 			e.setCancelled(true);
 
