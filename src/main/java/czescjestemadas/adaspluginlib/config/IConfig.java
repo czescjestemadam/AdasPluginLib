@@ -9,12 +9,12 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Config
+public abstract class IConfig
 {
 	private final Plugin plugin;
 	private final String filename;
 
-	protected Config(Plugin plugin, String filename)
+	protected IConfig(Plugin plugin, String filename)
 	{
 		this.plugin = plugin;
 		this.filename = filename;
