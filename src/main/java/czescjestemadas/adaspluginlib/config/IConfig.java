@@ -1,5 +1,8 @@
 package czescjestemadas.adaspluginlib.config;
 
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
@@ -7,17 +10,23 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class IConfig
 {
 	private final Plugin plugin;
 	private final String filename;
+	private final Map<Class<?>, IConfigSerializer<?>> serializers = new HashMap<>();
 
 	protected IConfig(Plugin plugin, String filename)
 	{
 		this.plugin = plugin;
 		this.filename = filename;
+		addSerializer(Component.class, new IConfigSerializer.MiniMessage());
+		addSerializer(Material.class, new IConfigSerializer.Material());
+		addSerializer(Sound.class , new IConfigSerializer.Sound());
 	}
 
 	public void load()
@@ -37,8 +46,8 @@ public abstract class IConfig
 			try
 			{
 				final Object value = config.get(path);
-				final ValueLoader valueLoader = field.getAnnotation(ValueLoader.class);
-				field.set(this, valueLoader == null ? value : valueLoader.value().load(value));
+				final IConfigSerializer<?> serializer = serializers.get(field.getType());
+				field.set(this, serializer == null ? value : serializer.deserialize(value));
 			}
 			catch (IllegalAccessException e)
 			{
@@ -58,8 +67,8 @@ public abstract class IConfig
 			try
 			{
 				final Object value = field.get(this);
-				final ValueLoader valueLoader = field.getAnnotation(ValueLoader.class);
-				config.set(path, valueLoader == null ? value : valueLoader.value().save(value));
+				final IConfigSerializer<?> serializer = serializers.get(field.getType());
+				config.set(path, serializer == null ? value : serializer.serialize(value));
 
 				final Comment comment = field.getAnnotation(Comment.class);
 				if (comment != null)
@@ -81,6 +90,10 @@ public abstract class IConfig
 		}
 	}
 
+	protected <T> void addSerializer(Class<T> cls, IConfigSerializer<T> serializer)
+	{
+		serializers.put(cls, serializer);
+	}
 
 	private File getFile()
 	{
