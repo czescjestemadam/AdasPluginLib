@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Query<T extends DBModel>
 {
@@ -33,40 +32,22 @@ public class Query<T extends DBModel>
 		return this;
 	}
 
-	public Query<T> withEquals(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.EQUALS, value));
-	}
-
-	public Query<T> withNotEquals(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.NOT_EQUALS, value));
-	}
-
-	public Query<T> withLess(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.LESS, value));
-	}
-
-	public Query<T> withLessEquals(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.LESS_EQUALS, value));
-	}
-
-	public Query<T> withGreater(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.GREATER, value));
-	}
-
-	public Query<T> withGreaterEquals(String fieldName, Object value)
-	{
-		return withEntry(new Entry(fieldName, CompareMethod.GREATER_EQUALS, value));
-	}
-
-
 	public PreparedStatement buildSqlQuery(String prefix, Connection connection) throws SQLException
 	{
-		final String sql = entries.stream().map(entry -> entry.fieldName + entry.compareMethod.sql + "?").collect(Collectors.joining(", "));
+		StringBuilder sql = new StringBuilder();
+
+		for (int i = 0; i < entries.size(); i++)
+		{
+			final Entry entry = entries.get(i);
+			final EntryJoinMethod joinMethod = entry.joinMethod == null ? EntryJoinMethod.AND : entry.joinMethod;
+
+			if (i > 0)
+				sql.append(' ').append(joinMethod).append(' ');
+
+			sql.append(entry.fieldName).append(entry.compareMethod.sql).append("?");
+		}
+
+//		final String sql = entries.stream().map(entry -> entry.fieldName + entry.compareMethod.sql + "?").collect(Collectors.joining(", "));
 		final PreparedStatement statement = connection.prepareStatement(prefix + " WHERE " + sql);
 
 		for (int i = 0; i < entries.size(); i++)
@@ -76,7 +57,7 @@ public class Query<T extends DBModel>
 	}
 
 
-	public record Entry(String fieldName, CompareMethod compareMethod, Object value)
+	public record Entry(EntryJoinMethod joinMethod, String fieldName, CompareMethod compareMethod, Object value)
 	{
 	}
 
@@ -95,6 +76,137 @@ public class Query<T extends DBModel>
 		CompareMethod(String sql)
 		{
 			this.sql = sql;
+		}
+	}
+
+	public enum EntryJoinMethod
+	{
+		AND,
+		OR
+	}
+
+	public static class Builder<R extends DBModel>
+	{
+		private final Query<R> query;
+
+		public Builder(Class<R> modelClass)
+		{
+			this.query = new Query<>(modelClass);
+		}
+
+		public Builder<R> equals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> notEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.NOT_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> less(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.LESS, value));
+			return this;
+		}
+
+		public Builder<R> lessEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.LESS_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> greater(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.GREATER, value));
+			return this;
+		}
+
+		public Builder<R> greaterEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(null, fieldName, CompareMethod.GREATER_EQUALS, value));
+			return this;
+		}
+
+
+		public Builder<R> andEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> andNotEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.NOT_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> andLess(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.LESS, value));
+			return this;
+		}
+
+		public Builder<R> andLessEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.LESS_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> andGreater(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.GREATER, value));
+			return this;
+		}
+
+		public Builder<R> andGreaterEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.AND, fieldName, CompareMethod.GREATER_EQUALS, value));
+			return this;
+		}
+
+
+		public Builder<R> orEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> orNotEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.NOT_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> orLess(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.LESS, value));
+			return this;
+		}
+
+		public Builder<R> orLessEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.LESS_EQUALS, value));
+			return this;
+		}
+
+		public Builder<R> orGreater(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.GREATER, value));
+			return this;
+		}
+
+		public Builder<R> orGreaterEquals(String fieldName, Object value)
+		{
+			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.GREATER_EQUALS, value));
+			return this;
+		}
+
+		public Query<R> build()
+		{
+			return query;
 		}
 	}
 }
