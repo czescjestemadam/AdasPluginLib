@@ -118,7 +118,7 @@ public abstract class SqlDatabase implements Database
 	}
 
 	@Override
-	public int insert(List<DBModel> models)
+	public int insert(List<? extends DBModel> models)
 	{
 		checkConnection();
 
