@@ -60,4 +60,26 @@ public interface IConfigSerializer<T>
 			}
 		}
 	}
+
+	class PotionType implements IConfigSerializer<org.bukkit.potion.PotionType>
+	{
+		@Override
+		public Object serialize(Object value)
+		{
+			return value.toString();
+		}
+
+		@Override
+		public org.bukkit.potion.PotionType deserialize(Object object)
+		{
+			try
+			{
+				return org.bukkit.potion.PotionType.valueOf(String.valueOf(object));
+			}
+			catch (IllegalArgumentException e)
+			{
+				return null;
+			}
+		}
+	}
 }

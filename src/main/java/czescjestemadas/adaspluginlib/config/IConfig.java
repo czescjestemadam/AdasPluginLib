@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionType;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +28,7 @@ public abstract class IConfig
 		addSerializer(Component.class, new IConfigSerializer.MiniMessage());
 		addSerializer(Material.class, new IConfigSerializer.Material());
 		addSerializer(Sound.class , new IConfigSerializer.Sound());
+		addSerializer(PotionType.class, new IConfigSerializer.PotionType());
 	}
 
 	public void load()
