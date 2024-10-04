@@ -1,5 +1,7 @@
 package czescjestemadas.adaspluginlib.database;
 
+import org.bukkit.Bukkit;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -47,8 +49,7 @@ public class Query<T extends DBModel>
 			sql.append(entry.fieldName).append(entry.compareMethod.sql).append("?");
 		}
 
-//		final String sql = entries.stream().map(entry -> entry.fieldName + entry.compareMethod.sql + "?").collect(Collectors.joining(", "));
-		final PreparedStatement statement = connection.prepareStatement(prefix + " WHERE " + sql);
+		final PreparedStatement statement = connection.prepareStatement(sql.isEmpty() ? prefix : prefix + " WHERE " + sql);
 
 		for (int i = 0; i < entries.size(); i++)
 			statement.setObject(i + 1, entries.get(i).value);
