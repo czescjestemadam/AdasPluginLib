@@ -1,6 +1,7 @@
 package czescjestemadas.adaspluginlib.config;
 
 import net.kyori.adventure.text.Component;
+import org.bukkit.Particle;
 
 public interface IConfigSerializer<T>
 {
@@ -75,6 +76,28 @@ public interface IConfigSerializer<T>
 			try
 			{
 				return org.bukkit.potion.PotionType.valueOf(String.valueOf(object));
+			}
+			catch (IllegalArgumentException e)
+			{
+				return null;
+			}
+		}
+	}
+
+	class Particle implements IConfigSerializer<org.bukkit.Particle>
+	{
+		@Override
+		public Object serialize(Object value)
+		{
+			return value.toString();
+		}
+
+		@Override
+		public org.bukkit.Particle deserialize(Object object)
+		{
+			try
+			{
+				return org.bukkit.Particle.valueOf(String.valueOf(object));
 			}
 			catch (IllegalArgumentException e)
 			{

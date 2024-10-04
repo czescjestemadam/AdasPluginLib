@@ -2,6 +2,7 @@ package czescjestemadas.adaspluginlib.config;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -29,6 +30,7 @@ public abstract class IConfig
 		addSerializer(Material.class, new IConfigSerializer.Material());
 		addSerializer(Sound.class , new IConfigSerializer.Sound());
 		addSerializer(PotionType.class, new IConfigSerializer.PotionType());
+		addSerializer(Particle.class, new IConfigSerializer.Particle());
 	}
 
 	public void load()
