@@ -4,6 +4,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class Scheduler
@@ -27,16 +28,9 @@ public final class Scheduler
 		return future;
 	}
 
-	public CompletableFuture<BukkitTask> timer(int ticks)
+	public void timer(Consumer<BukkitTask> func, int ticks)
 	{
-		return timer(Function.identity(), ticks);
-	}
-
-	public <T> CompletableFuture<T> timer(Function<BukkitTask, T> func, int ticks)
-	{
-		final CompletableFuture<T> future = new CompletableFuture<>();
-		plugin.getServer().getScheduler().runTaskTimer(plugin, task -> future.complete(func.apply(task)), ticks, ticks);
-		return future;
+		plugin.getServer().getScheduler().runTaskTimer(plugin, func, ticks, ticks);
 	}
 
 	public CompletableFuture<BukkitTask> async()
@@ -63,15 +57,8 @@ public final class Scheduler
 		return future;
 	}
 
-	public CompletableFuture<BukkitTask> asyncTimer(int ticks)
+	public void asyncTimer(Consumer<BukkitTask> func, int ticks)
 	{
-		return asyncTimer(Function.identity(), ticks);
-	}
-
-	public <T> CompletableFuture<T> asyncTimer(Function<BukkitTask, T> func, int ticks)
-	{
-		final CompletableFuture<T> future = new CompletableFuture<>();
-		plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, task -> future.complete(func.apply(task)), ticks, ticks);
-		return future;
+		plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, func, ticks, ticks);
 	}
 }
