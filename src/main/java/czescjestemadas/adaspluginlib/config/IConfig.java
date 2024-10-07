@@ -11,26 +11,26 @@ import org.bukkit.potion.PotionType;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Type;
+import java.util.*;
 
 public abstract class IConfig
 {
 	private final Plugin plugin;
 	private final String filename;
-	private final Map<Class<?>, IConfigSerializer<?>> serializers = new HashMap<>();
+	private final Map<Type, IConfigSerializer<?>> serializers = new HashMap<>();
 
 	protected IConfig(Plugin plugin, String filename)
 	{
 		this.plugin = plugin;
 		this.filename = filename;
-		addSerializer(Component.class, new IConfigSerializer.MiniMessage());
-		addSerializer(Material.class, new IConfigSerializer.Material());
-		addSerializer(Sound.class , new IConfigSerializer.Sound());
-		addSerializer(PotionType.class, new IConfigSerializer.PotionType());
-		addSerializer(Particle.class, new IConfigSerializer.Particle());
+		addSerializer(Component.class, IConfigSerializer.MINI_MESSAGE);
+		addSerializer(Material.class, IConfigSerializer.MATERIAL);
+		addSerializer(Sound.class , IConfigSerializer.SOUND);
+		addSerializer(PotionType.class, IConfigSerializer.POTION_TYPE);
+		addSerializer(Particle.class, IConfigSerializer.PARTICLE);
+		addSerializer(List.class, IConfigSerializer.LIST);
+		addSerializer(Optional.class, IConfigSerializer.OPTIONAL);
 	}
 
 	public void load()
@@ -50,8 +50,7 @@ public abstract class IConfig
 			try
 			{
 				final Object value = config.get(path);
-				final IConfigSerializer<?> serializer = serializers.get(field.getType());
-				field.set(this, serializer == null ? value : serializer.deserialize(value));
+				field.set(this, getSerializer(field.getType()).deserialize(this, field, value));
 			}
 			catch (IllegalAccessException e)
 			{
@@ -71,8 +70,7 @@ public abstract class IConfig
 			try
 			{
 				final Object value = field.get(this);
-				final IConfigSerializer<?> serializer = serializers.get(field.getType());
-				config.set(path, serializer == null ? value : serializer.serialize(value));
+				config.set(path, getSerializer(field.getType()).serialize(this, field, value));
 
 				final Comment comment = field.getAnnotation(Comment.class);
 				if (comment != null)
@@ -92,6 +90,11 @@ public abstract class IConfig
 		{
 			plugin.getSLF4JLogger().error("cannot save {}", filename);
 		}
+	}
+
+	protected IConfigSerializer<?> getSerializer(Type type)
+	{
+		return serializers.getOrDefault(type, IConfigSerializer.IDENTITY);
 	}
 
 	protected <T> void addSerializer(Class<T> cls, IConfigSerializer<T> serializer)
