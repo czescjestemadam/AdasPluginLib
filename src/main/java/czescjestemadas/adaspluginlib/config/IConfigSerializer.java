@@ -1,29 +1,28 @@
 package czescjestemadas.adaspluginlib.config;
 
+import czescjestemadas.adaspluginlib.util.EnumUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.potion.PotionType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Optional;
 
 public interface IConfigSerializer<T>
 {
-	IConfigSerializer.Identity IDENTITY = new IConfigSerializer.Identity();
-	IConfigSerializer.MiniMessage MINI_MESSAGE = new IConfigSerializer.MiniMessage();
-	IConfigSerializer.Material MATERIAL = new IConfigSerializer.Material();
-	IConfigSerializer.Sound SOUND = new IConfigSerializer.Sound();
-	IConfigSerializer.PotionType POTION_TYPE = new IConfigSerializer.PotionType();
-	IConfigSerializer.Particle PARTICLE = new IConfigSerializer.Particle();
-	IConfigSerializer.List LIST = new IConfigSerializer.List();
-	IConfigSerializer.Optional OPTIONAL = new IConfigSerializer.Optional();
-
-
 	Object serialize(IConfig config, Field field, Object value);
 
 	T deserialize(IConfig config, Field field, Object object);
 
 
-	class Identity implements IConfigSerializer<Object>
+	IConfigSerializer<Object> IDENTITY = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -36,24 +35,24 @@ public interface IConfigSerializer<T>
 		{
 			return object;
 		}
-	}
+	};
 
-	class MiniMessage implements IConfigSerializer<Component>
+	IConfigSerializer<Component> MINI_MESSAGE = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
 		{
-			return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize((Component)value);
+			return MiniMessage.miniMessage().serialize((Component)value);
 		}
 
 		@Override
 		public Component deserialize(IConfig config, Field field, Object object)
 		{
-			return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(String.valueOf(object));
+			return MiniMessage.miniMessage().deserialize(String.valueOf(object));
 		}
-	}
+	};
 
-	class Material implements IConfigSerializer<org.bukkit.Material>
+	IConfigSerializer<Material> MATERIAL = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -62,13 +61,13 @@ public interface IConfigSerializer<T>
 		}
 
 		@Override
-		public org.bukkit.Material deserialize(IConfig config, Field field, Object object)
+		public Material deserialize(IConfig config, Field field, Object object)
 		{
-			return org.bukkit.Material.getMaterial(String.valueOf(object));
+			return Material.getMaterial(String.valueOf(object));
 		}
-	}
+	};
 
-	class Sound implements IConfigSerializer<org.bukkit.Sound>
+	IConfigSerializer<Sound> SOUND = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -77,20 +76,13 @@ public interface IConfigSerializer<T>
 		}
 
 		@Override
-		public org.bukkit.Sound deserialize(IConfig config, Field field, Object object)
+		public Sound deserialize(IConfig config, Field field, Object object)
 		{
-			try
-			{
-				return org.bukkit.Sound.valueOf(String.valueOf(object));
-			}
-			catch (IllegalArgumentException e)
-			{
-				return null;
-			}
+			return EnumUtil.valueOf(Sound.class, String.valueOf(object));
 		}
-	}
+	};
 
-	class PotionType implements IConfigSerializer<org.bukkit.potion.PotionType>
+	IConfigSerializer<PotionType> POTION_TYPE = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -99,20 +91,13 @@ public interface IConfigSerializer<T>
 		}
 
 		@Override
-		public org.bukkit.potion.PotionType deserialize(IConfig config, Field field, Object object)
+		public PotionType deserialize(IConfig config, Field field, Object object)
 		{
-			try
-			{
-				return org.bukkit.potion.PotionType.valueOf(String.valueOf(object));
-			}
-			catch (IllegalArgumentException e)
-			{
-				return null;
-			}
+			return EnumUtil.valueOf(PotionType.class, String.valueOf(object));
 		}
-	}
+	};
 
-	class Particle implements IConfigSerializer<org.bukkit.Particle>
+	IConfigSerializer<Particle> PARTICLE = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -121,55 +106,65 @@ public interface IConfigSerializer<T>
 		}
 
 		@Override
-		public org.bukkit.Particle deserialize(IConfig config, Field field, Object object)
+		public Particle deserialize(IConfig config, Field field, Object object)
 		{
-			try
-			{
-				return org.bukkit.Particle.valueOf(String.valueOf(object));
-			}
-			catch (IllegalArgumentException e)
-			{
-				return null;
-			}
+			return EnumUtil.valueOf(Particle.class, String.valueOf(object));
 		}
-	}
+	};
 
-	class List implements IConfigSerializer<java.util.List>
+	IConfigSerializer<List> LIST = new IConfigSerializer<>()
+
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
 		{
 			final IConfigSerializer<?> serializer = config.getSerializer(IConfigSerializer.getParamType(field));
-			return ((java.util.List<?>)value).stream().map(o -> serializer.serialize(config, field, o)).toList();
+			return ((List<?>)value).stream().map(o -> serializer.serialize(config, field, o)).toList();
 		}
 
 		@Override
-		public java.util.List deserialize(IConfig config, Field field, Object object)
+		public List deserialize(IConfig config, Field field, Object object)
 		{
 			final IConfigSerializer<?> serializer = config.getSerializer(IConfigSerializer.getParamType(field));
-			return ((java.util.List<?>)object).stream().map(o -> serializer.deserialize(config, field, o)).toList();
+			return ((List<?>)object).stream().map(o -> serializer.deserialize(config, field, o)).toList();
 		}
-	}
+	};
 
-	class Optional implements IConfigSerializer<java.util.Optional>
+	IConfigSerializer<Optional> OPTIONAL = new IConfigSerializer<>()
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
 		{
-			java.util.Optional optional = (java.util.Optional)value;
+			final Optional optional = (Optional)value;
 			if (optional.isEmpty())
 				return null;
 			return config.getSerializer(IConfigSerializer.getParamType(field)).serialize(config, field, optional.get());
 		}
 
 		@Override
-		public java.util.Optional deserialize(IConfig config, Field field, Object object)
+		public Optional deserialize(IConfig config, Field field, Object object)
 		{
-			return java.util.Optional.ofNullable(
+			return Optional.ofNullable(
 					config.getSerializer(IConfigSerializer.getParamType(field)).deserialize(config, field, object)
 			);
 		}
-	}
+	};
+
+	IConfigSerializer<NamedTextColor> NAMED_TEXT_COLOR = new IConfigSerializer<>()
+	{
+		@Override
+		public Object serialize(IConfig config, Field field, Object value)
+		{
+			return value.toString();
+		}
+
+		@Override
+		public NamedTextColor deserialize(IConfig config, Field field, Object object)
+		{
+			return NamedTextColor.NAMES.value(String.valueOf(object));
+		}
+	};
+
 
 	private static Type getParamType(Field field)
 	{

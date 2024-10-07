@@ -1,6 +1,7 @@
 package czescjestemadas.adaspluginlib.config;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -31,6 +32,7 @@ public abstract class IConfig
 		addSerializer(Particle.class, IConfigSerializer.PARTICLE);
 		addSerializer(List.class, IConfigSerializer.LIST);
 		addSerializer(Optional.class, IConfigSerializer.OPTIONAL);
+		addSerializer(NamedTextColor.class, IConfigSerializer.NAMED_TEXT_COLOR);
 	}
 
 	public void load()
