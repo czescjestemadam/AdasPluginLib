@@ -39,6 +39,7 @@ public abstract class INodeCommand extends ICommand
 		addParser(Double.class, Double::parseDouble);
 		addParser(double.class, Double::parseDouble);
 		addParser(Player.class, Bukkit::getPlayer);
+		addParser(OfflinePlayer.class, Bukkit::getOfflinePlayerIfCached)
 		addParser(UUID.class, UUID::fromString);
 		addParser(Material.class, Material::getMaterial);
 		addParser(Sound.class, arg -> EnumUtil.valueOf(Sound.class, arg));
