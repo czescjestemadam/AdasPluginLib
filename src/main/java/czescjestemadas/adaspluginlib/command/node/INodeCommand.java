@@ -84,8 +84,6 @@ public abstract class INodeCommand extends ICommand
 			if (nodeStrArgs == null)
 				continue;
 
-			System.out.println("method = " + method);
-
 			final Permission permission = method.getAnnotation(Permission.class);
 			if (permission != null && !sender.hasPermission(permission.value()))
 			{
@@ -96,12 +94,8 @@ public abstract class INodeCommand extends ICommand
 			if (checkPlayerOnly(sender, method, true))
 				return false;
 
-			final Object[] nodeArgs = new Object[parameters.length];
+			final Object[] nodeArgs = parseNodeArgs(parameters, nodeStrArgs);
 			nodeArgs[0] = sender;
-			for (int i = 1; i < nodeArgs.length; i++)
-				nodeArgs[i] = getParser(parameters[i].getType()).parse(nodeStrArgs.get(i - 1));
-
-			System.out.println("nodeArgs = " + Arrays.toString(nodeArgs));
 
 			try
 			{
@@ -136,7 +130,7 @@ public abstract class INodeCommand extends ICommand
 
 			try
 			{
-				return (List<String>)completer.invoke(this, sender, args[args.length - 1]);
+				return (List<String>)completer.invoke(this, sender);
 			}
 			catch (IllegalAccessException | InvocationTargetException e)
 			{
@@ -158,12 +152,9 @@ public abstract class INodeCommand extends ICommand
 			if (checkParams(searchArgs, nodePathArgs, parameters, false))
 				continue;
 
-			System.out.println("node = " + node);
 			final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs);
 			if (nodeStrArgs == null)
 				continue;
-
-			System.out.println("method = " + method);
 
 			final Permission permission = method.getAnnotation(Permission.class);
 			if (permission != null && !sender.hasPermission(permission.value()))
@@ -172,12 +163,8 @@ public abstract class INodeCommand extends ICommand
 			if (checkPlayerOnly(sender, method, false))
 				return List.of();
 
-			final Object[] nodeArgs = new Object[parameters.length];
+			final Object[] nodeArgs = parseNodeArgs(parameters, nodeStrArgs);
 			nodeArgs[0] = sender;
-			for (int i = 1; i < nodeArgs.length; i++)
-				nodeArgs[i] = getParser(parameters[i].getType()).parse(nodeStrArgs.get(i - 1));
-
-			System.out.println("nodeArgs = " + Arrays.toString(nodeArgs));
 
 			try
 			{
@@ -248,29 +235,22 @@ public abstract class INodeCommand extends ICommand
 	{
 		final List<String> nodeStrArgs = new ArrayList<>();
 
-		boolean matches = true;
-
 		int argIdx = 0;
 		for (int nodeArgIdx = 0; nodeArgIdx < nodePathArgs.length; nodeArgIdx++)
 		{
+			// Single word placeholder
 			if (nodePathArgs[nodeArgIdx].equals("{}"))
 			{
-				// Single word placeholder
 				if (argIdx < args.length)
-				{
 					nodeStrArgs.add(args[argIdx++]);
-				}
 				else
-				{
-					matches = false;
-					break;
-				}
+					return null;
 			}
+			// Multiple words placeholder
 			else if (nodePathArgs[nodeArgIdx].equals("[]"))
 			{
 				final StringBuilder wide = new StringBuilder();
 
-				// Multiple words placeholder
 				while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !args[argIdx].equals(nodePathArgs[nodeArgIdx + 1])))
 				{
 					if (!wide.isEmpty())
@@ -280,22 +260,17 @@ public abstract class INodeCommand extends ICommand
 
 				nodeStrArgs.add(wide.toString());
 			}
+			// Fixed parts of the pattern
 			else
 			{
-				// Fixed parts of the pattern
 				if (argIdx < args.length && nodePathArgs[nodeArgIdx].equals(args[argIdx]))
-				{
 					argIdx++;
-				}
 				else
-				{
-					matches = false;
-					break;
-				}
+					return null;
 			}
 		}
 
-		return matches ? nodeStrArgs : null;
+		return nodeStrArgs;
 	}
 
 	/// true - failed
@@ -316,5 +291,14 @@ public abstract class INodeCommand extends ICommand
 		}
 
 		return true;
+	}
+
+	private Object[] parseNodeArgs(Parameter[] parameters, List<String> nodeStrArgs)
+	{
+		final Object[] nodeArgs = new Object[parameters.length];
+		for (int i = 1; i < nodeArgs.length; i++)
+			nodeArgs[i] = getParser(parameters[i].getType()).parse(nodeStrArgs.get(i - 1));
+
+		return nodeArgs;
 	}
 }
