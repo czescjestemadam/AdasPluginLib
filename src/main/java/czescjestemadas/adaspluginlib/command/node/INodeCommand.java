@@ -1,12 +1,8 @@
 package czescjestemadas.adaspluginlib.command.node;
 
 import czescjestemadas.adaspluginlib.command.ICommand;
-import czescjestemadas.adaspluginlib.command.node.annotation.Node;
-import czescjestemadas.adaspluginlib.command.node.annotation.Permission;
-import czescjestemadas.adaspluginlib.command.node.annotation.PlayerOnlyNode;
-import czescjestemadas.adaspluginlib.command.node.annotation.RootNode;
+import czescjestemadas.adaspluginlib.command.node.annotation.*;
 import czescjestemadas.adaspluginlib.util.EnumUtil;
-import czescjestemadas.adaspluginlib.util.StrUtil;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.command.Command;
@@ -55,10 +51,10 @@ public abstract class INodeCommand extends ICommand
 				return false;
 
 			final Parameter[] parameters = rootNode.getParameters();
-			if (parameters.length != 1 || !CommandSender.class.isAssignableFrom(parameters[0].getType()))
+			if (checkParams(args, new String[0], parameters, true))
 				return false;
 
-			if (checkPlayerOnly(sender, rootNode))
+			if (checkPlayerOnly(sender, rootNode, true))
 				return false;
 
 			try
@@ -79,70 +75,13 @@ public abstract class INodeCommand extends ICommand
 			if (node == null)
 				continue;
 
+			final String[] nodePathArgs = node.value().split("\\s+");
 			final Parameter[] parameters = method.getParameters();
-
-			final String nodePath = node.value();
-			final String[] nodePathArgs = nodePath.split("\\s+");
-
-			if (args.length < nodePathArgs.length - 1)
+			if (checkParams(args, nodePathArgs, parameters, false))
 				continue;
 
-			if (parameters.length != countNeededParamCount(nodePath) + 1)
-				continue;
-
-			System.out.println("node = " + node);
-			final List<String> nodeStrArgs = new ArrayList<>();
-
-			boolean matches = true;
-
-			int argIdx = 0;
-			for (int nodeArgIdx = 0; nodeArgIdx < nodePathArgs.length; nodeArgIdx++)
-			{
-				if (nodePathArgs[nodeArgIdx].equals("{}"))
-				{
-					// Single word placeholder
-					if (argIdx < args.length)
-					{
-						nodeStrArgs.add(args[argIdx++]);
-					}
-					else
-					{
-						matches = false;
-						break;
-					}
-				}
-				else if (nodePathArgs[nodeArgIdx].equals("[]"))
-				{
-					final StringBuilder wide = new StringBuilder();
-
-					// Multiple words placeholder
-					while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !args[argIdx].equals(nodePathArgs[nodeArgIdx + 1])))
-					{
-						if (!wide.isEmpty())
-							wide.append(" ");
-						wide.append(args[argIdx++]);
-					}
-
-					nodeStrArgs.add(wide.toString());
-				}
-				else
-				{
-					// Fixed parts of the pattern
-					if (argIdx < args.length && nodePathArgs[nodeArgIdx].equals(args[argIdx]))
-					{
-						argIdx++;
-					}
-					else
-					{
-						matches = false;
-						break;
-					}
-				}
-			}
-
-			System.out.println("nodeStrArgs = " + nodeStrArgs);
-
-			if (!matches)
+			final List<String> nodeStrArgs = fillStrArgsIfMatches(args, nodePathArgs);
+			if (nodeStrArgs == null)
 				continue;
 
 			System.out.println("method = " + method);
@@ -154,7 +93,7 @@ public abstract class INodeCommand extends ICommand
 				return false;
 			}
 
-			if (checkPlayerOnly(sender, method))
+			if (checkPlayerOnly(sender, method, true))
 				return false;
 
 			final Object[] nodeArgs = new Object[parameters.length];
@@ -182,6 +121,75 @@ public abstract class INodeCommand extends ICommand
 	@Override
 	public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args)
 	{
+		if (args.length == 1)
+		{
+			final Method completer = getRootNodeCompleter();
+			if (completer == null)
+				return List.of();
+
+			final Parameter[] parameters = completer.getParameters();
+			if (checkParams(args, new String[0], parameters, true))
+				return List.of();
+
+			if (checkPlayerOnly(sender, completer, false))
+				return List.of();
+
+			try
+			{
+				return (List<String>)completer.invoke(this, sender, args[args.length - 1]);
+			}
+			catch (IllegalAccessException | InvocationTargetException e)
+			{
+				e.printStackTrace();
+				return List.of();
+			}
+		}
+
+		final String[] searchArgs = args.length == 0 ? new String[0] : Arrays.copyOfRange(args, 0, args.length - 1);
+
+		for (Method method : getClass().getMethods())
+		{
+			final NodeCompleter node = method.getAnnotation(NodeCompleter.class);
+			if (node == null)
+				continue;
+
+			final String[] nodePathArgs = node.value().split("\\s+");
+			final Parameter[] parameters = method.getParameters();
+			if (checkParams(searchArgs, nodePathArgs, parameters, false))
+				continue;
+
+			System.out.println("node = " + node);
+			final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs);
+			if (nodeStrArgs == null)
+				continue;
+
+			System.out.println("method = " + method);
+
+			final Permission permission = method.getAnnotation(Permission.class);
+			if (permission != null && !sender.hasPermission(permission.value()))
+				return List.of();
+
+			if (checkPlayerOnly(sender, method, false))
+				return List.of();
+
+			final Object[] nodeArgs = new Object[parameters.length];
+			nodeArgs[0] = sender;
+			for (int i = 1; i < nodeArgs.length; i++)
+				nodeArgs[i] = getParser(parameters[i].getType()).parse(nodeStrArgs.get(i - 1));
+
+			System.out.println("nodeArgs = " + Arrays.toString(nodeArgs));
+
+			try
+			{
+				return retMatches(args[args.length - 1], (List<String>)method.invoke(this, nodeArgs));
+			}
+			catch (IllegalAccessException | InvocationTargetException e)
+			{
+				e.printStackTrace();
+				return List.of();
+			}
+		}
+
 		return List.of();
 	}
 
@@ -206,8 +214,92 @@ public abstract class INodeCommand extends ICommand
 		return null;
 	}
 
+	private Method getRootNodeCompleter()
+	{
+		for (Method method : getClass().getMethods())
+		{
+			if (method.isAnnotationPresent(RootNodeCompleter.class))
+				return method;
+		}
+
+		return null;
+	}
+
 	/// true - failed
-	private static boolean checkPlayerOnly(CommandSender sender, Method node)
+	private static boolean checkParams(String[] args, String[] nodePathArgs, Parameter[] parameters, boolean root)
+	{
+		if (parameters.length < 1 || !CommandSender.class.isAssignableFrom(parameters[0].getType()))
+			return true;
+
+		if (root && parameters.length != 1)
+			return true;
+
+		if (!root && args.length < nodePathArgs.length - 1)
+			return true;
+
+		if (!root && parameters.length != Arrays.stream(nodePathArgs).filter(str -> str.equals("{}") || str.equals("[]")).count() + 1)
+			return true;
+
+		return false;
+	}
+
+	/// null == not matching
+	private static List<String> fillStrArgsIfMatches(String[] args, String[] nodePathArgs)
+	{
+		final List<String> nodeStrArgs = new ArrayList<>();
+
+		boolean matches = true;
+
+		int argIdx = 0;
+		for (int nodeArgIdx = 0; nodeArgIdx < nodePathArgs.length; nodeArgIdx++)
+		{
+			if (nodePathArgs[nodeArgIdx].equals("{}"))
+			{
+				// Single word placeholder
+				if (argIdx < args.length)
+				{
+					nodeStrArgs.add(args[argIdx++]);
+				}
+				else
+				{
+					matches = false;
+					break;
+				}
+			}
+			else if (nodePathArgs[nodeArgIdx].equals("[]"))
+			{
+				final StringBuilder wide = new StringBuilder();
+
+				// Multiple words placeholder
+				while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !args[argIdx].equals(nodePathArgs[nodeArgIdx + 1])))
+				{
+					if (!wide.isEmpty())
+						wide.append(" ");
+					wide.append(args[argIdx++]);
+				}
+
+				nodeStrArgs.add(wide.toString());
+			}
+			else
+			{
+				// Fixed parts of the pattern
+				if (argIdx < args.length && nodePathArgs[nodeArgIdx].equals(args[argIdx]))
+				{
+					argIdx++;
+				}
+				else
+				{
+					matches = false;
+					break;
+				}
+			}
+		}
+
+		return matches ? nodeStrArgs : null;
+	}
+
+	/// true - failed
+	private static boolean checkPlayerOnly(CommandSender sender, Method node, boolean send)
 	{
 		final PlayerOnlyNode annotation = node.getAnnotation(PlayerOnlyNode.class);
 		if (annotation == null)
@@ -216,47 +308,13 @@ public abstract class INodeCommand extends ICommand
 		if (sender instanceof Player)
 			return false;
 
-		final String errorMessage = annotation.errorMessage();
-		if (!errorMessage.isEmpty())
-			sender.sendRichMessage(errorMessage);
-		return true;
-	}
-
-	private static int countNeededParamCount(String nodePath)
-	{
-		return StrUtil.countOccurrences(nodePath, "{}") + StrUtil.countOccurrences(nodePath, "[]");
-	}
-
-	private static List<String> getMatchingArgs(String[] args, String nodePath, boolean ignoreCase)
-	{
-		final String[] nodePathArgs = nodePath.split("\\s+");
-
-		final List<String> nodeStrArgs = new ArrayList<>();
-
-		int argIdx = 0;
-		for (int nodeArgIdx = 0; nodeArgIdx < nodePathArgs.length; nodeArgIdx++)
+		if (send)
 		{
-			if (nodePathArgs[nodeArgIdx].equals("{}"))
-			{
-				nodeStrArgs.add(args[argIdx]);
-				argIdx++;
-			}
-			else if (nodePathArgs[nodeArgIdx].equals("[]"))
-			{
-				final StringBuilder replacement = new StringBuilder();
-				while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !args[argIdx].equals(nodePathArgs[nodeArgIdx + 1])))
-				{
-					if (!replacement.isEmpty())
-						replacement.append(" ");
-					replacement.append(args[argIdx]);
-					argIdx++;
-				}
-				nodeStrArgs.add(replacement.toString());
-			}
-			else
-				argIdx++;
+			final String errorMessage = annotation.errorMessage();
+			if (!errorMessage.isEmpty())
+				sender.sendRichMessage(errorMessage);
 		}
 
-		return nodeStrArgs;
+		return true;
 	}
 }
