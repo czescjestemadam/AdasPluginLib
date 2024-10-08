@@ -8,10 +8,7 @@ import czescjestemadas.adaspluginlib.command.node.annotation.RootNode;
 import czescjestemadas.adaspluginlib.util.EnumUtil;
 import czescjestemadas.adaspluginlib.util.StrUtil;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -39,7 +36,7 @@ public abstract class INodeCommand extends ICommand
 		addParser(Double.class, Double::parseDouble);
 		addParser(double.class, Double::parseDouble);
 		addParser(Player.class, Bukkit::getPlayer);
-		addParser(OfflinePlayer.class, Bukkit::getOfflinePlayerIfCached)
+		addParser(OfflinePlayer.class, Bukkit::getOfflinePlayerIfCached);
 		addParser(UUID.class, UUID::fromString);
 		addParser(Material.class, Material::getMaterial);
 		addParser(Sound.class, arg -> EnumUtil.valueOf(Sound.class, arg));
