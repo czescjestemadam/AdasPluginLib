@@ -7,6 +7,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
 import java.lang.reflect.Field;
@@ -94,6 +95,21 @@ public interface IConfigSerializer<T>
 		public PotionType deserialize(IConfig config, Field field, Object object)
 		{
 			return EnumUtil.valueOf(PotionType.class, String.valueOf(object));
+		}
+	};
+
+	IConfigSerializer<PotionEffectType> POTION_EFFECT_TYPE = new IConfigSerializer<>()
+	{
+		@Override
+		public Object serialize(IConfig config, Field field, Object value)
+		{
+			return ((PotionEffectType)value).getName();
+		}
+
+		@Override
+		public PotionEffectType deserialize(IConfig config, Field field, Object object)
+		{
+			return PotionEffectType.getByName(String.valueOf(object));
 		}
 	};
 

@@ -7,6 +7,7 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
 import java.io.File;
@@ -29,6 +30,7 @@ public abstract class IConfig
 		addSerializer(Material.class, IConfigSerializer.MATERIAL);
 		addSerializer(Sound.class , IConfigSerializer.SOUND);
 		addSerializer(PotionType.class, IConfigSerializer.POTION_TYPE);
+		addSerializer(PotionEffectType.class, IConfigSerializer.POTION_EFFECT_TYPE);
 		addSerializer(Particle.class, IConfigSerializer.PARTICLE);
 		addSerializer(List.class, IConfigSerializer.LIST);
 		addSerializer(Optional.class, IConfigSerializer.OPTIONAL);
