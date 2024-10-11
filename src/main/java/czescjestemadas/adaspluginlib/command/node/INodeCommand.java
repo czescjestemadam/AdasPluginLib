@@ -109,6 +109,25 @@ public abstract class INodeCommand extends ICommand
 			return true;
 		}
 
+		final Method helpNode = getHelpNode();
+		if (helpNode != null)
+		{
+			final Parameter[] parameters = helpNode.getParameters();
+			if (checkParams(args, new String[0], parameters, true))
+				return false;
+
+			try
+			{
+				helpNode.invoke(this, sender);
+			}
+			catch (IllegalAccessException | InvocationTargetException e)
+			{
+				throw new RuntimeException(e);
+			}
+
+			return true;
+		}
+
 		return false;
 	}
 
@@ -195,6 +214,17 @@ public abstract class INodeCommand extends ICommand
 		for (Method method : getClass().getMethods())
 		{
 			if (method.isAnnotationPresent(RootNode.class))
+				return method;
+		}
+
+		return null;
+	}
+
+	private Method getHelpNode()
+	{
+		for (Method method : getClass().getMethods())
+		{
+			if (method.isAnnotationPresent(HelpNode.class))
 				return method;
 		}
 
