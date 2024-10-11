@@ -162,37 +162,56 @@ public abstract class INodeCommand extends ICommand
 
 		for (Method method : getClass().getMethods())
 		{
-			final NodeCompleter node = method.getAnnotation(NodeCompleter.class);
-			if (node == null)
-				continue;
+			String[] nodePaths = null;
 
-			final String[] nodePathArgs = node.value().split("\\s+");
-			final Parameter[] parameters = method.getParameters();
-			if (checkParams(searchArgs, nodePathArgs, parameters, false))
-				continue;
-
-			final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs);
-			if (nodeStrArgs == null)
-				continue;
-
-			final Permission permission = method.getAnnotation(Permission.class);
-			if (permission != null && !sender.hasPermission(permission.value()))
-				return List.of();
-
-			if (checkPlayerOnly(sender, method, false))
-				return List.of();
-
-			final Object[] nodeArgs = parseNodeArgs(parameters, nodeStrArgs);
-			nodeArgs[0] = sender;
-
-			try
+			final CompleterNodes completerNodes = method.getAnnotation(CompleterNodes.class);
+			if (completerNodes != null)
 			{
-				return retMatches(args[args.length - 1], (List<String>)method.invoke(this, nodeArgs));
+				final NodeCompleter[] completers = completerNodes.value();
+				nodePaths = new String[completers.length];
+				for (int i = 0; i < completers.length; i++)
+					nodePaths[i] = completers[i].value();
 			}
-			catch (IllegalAccessException | InvocationTargetException e)
+			else
 			{
-				e.printStackTrace();
-				return List.of();
+				final NodeCompleter node = method.getAnnotation(NodeCompleter.class);
+				if (node != null)
+					nodePaths = new String[]{node.value()};
+			}
+
+			if (nodePaths == null)
+				continue;
+
+			for (String nodePath : nodePaths)
+			{
+				final String[] nodePathArgs = nodePath.split("\\s+");
+				final Parameter[] parameters = method.getParameters();
+				if (checkParams(searchArgs, nodePathArgs, parameters, false))
+					continue;
+
+				final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs);
+				if (nodeStrArgs == null)
+					continue;
+
+				final Permission permission = method.getAnnotation(Permission.class);
+				if (permission != null && !sender.hasPermission(permission.value()))
+					return List.of();
+
+				if (checkPlayerOnly(sender, method, false))
+					return List.of();
+
+				final Object[] nodeArgs = parseNodeArgs(parameters, nodeStrArgs);
+				nodeArgs[0] = sender;
+
+				try
+				{
+					return retMatches(args[args.length - 1], (List<String>)method.invoke(this, nodeArgs));
+				}
+				catch (IllegalAccessException | InvocationTargetException e)
+				{
+					e.printStackTrace();
+					return List.of();
+				}
 			}
 		}
 
