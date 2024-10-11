@@ -1,6 +1,7 @@
 package czescjestemadas.adaspluginlib.config;
 
 import czescjestemadas.adaspluginlib.util.EnumUtil;
+import czescjestemadas.adaspluginlib.util.TypeUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -134,14 +135,14 @@ public interface IConfigSerializer<T>
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
 		{
-			final IConfigSerializer<?> serializer = config.getSerializer(IConfigSerializer.getParamType(field));
+			final IConfigSerializer<?> serializer = config.getSerializer(TypeUtil.getParamType(field));
 			return ((List<?>)value).stream().map(o -> serializer.serialize(config, field, o)).toList();
 		}
 
 		@Override
 		public List deserialize(IConfig config, Field field, Object object)
 		{
-			final IConfigSerializer<?> serializer = config.getSerializer(IConfigSerializer.getParamType(field));
+			final IConfigSerializer<?> serializer = config.getSerializer(TypeUtil.getParamType(field));
 			return ((List<?>)object).stream().map(o -> serializer.deserialize(config, field, o)).toList();
 		}
 	};
@@ -154,14 +155,14 @@ public interface IConfigSerializer<T>
 			final Optional optional = (Optional)value;
 			if (optional.isEmpty())
 				return null;
-			return config.getSerializer(IConfigSerializer.getParamType(field)).serialize(config, field, optional.get());
+			return config.getSerializer(TypeUtil.getParamType(field)).serialize(config, field, optional.get());
 		}
 
 		@Override
 		public Optional deserialize(IConfig config, Field field, Object object)
 		{
 			return Optional.ofNullable(
-					config.getSerializer(IConfigSerializer.getParamType(field)).deserialize(config, field, object)
+					config.getSerializer(TypeUtil.getParamType(field)).deserialize(config, field, object)
 			);
 		}
 	};
