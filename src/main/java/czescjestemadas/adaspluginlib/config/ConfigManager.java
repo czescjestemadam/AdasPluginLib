@@ -1,36 +1,33 @@
 package czescjestemadas.adaspluginlib.config;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-public final class ConfigManager
+public class ConfigManager
 {
-	private final List<IConfig> configs;
+	private final Map<Class<? extends IConfig>, IConfig> configs = new HashMap<>();
 
 	public ConfigManager(IConfig... configs)
 	{
-		this.configs = List.of(configs);
+		for (IConfig config : configs)
+			this.configs.put(config.getClass(), config);
 	}
 
 	public void load()
 	{
-		for (IConfig config : configs)
+		for (IConfig config : configs.values())
 			config.load();
 	}
 
 	public void save()
 	{
-		for (IConfig config : configs)
+		for (IConfig config : configs.values())
 			config.save();
 	}
 
 	public <T extends IConfig> T get(Class<T> cls)
 	{
-		for (IConfig config : configs)
-		{
-			if (cls.isInstance(config))
-				return cls.cast(config);
-		}
-
-		return null;
+		final IConfig config = configs.get(cls);
+		return config == null ? null : cls.cast(config);
 	}
 }
