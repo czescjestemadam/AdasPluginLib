@@ -8,13 +8,15 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface IConfigSerializer<T>
@@ -182,9 +184,33 @@ public interface IConfigSerializer<T>
 		}
 	};
 
-
-	private static Type getParamType(Field field)
+	IConfigSerializer<Map> MAP = new IConfigSerializer<>()
 	{
-		return ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0];
-	}
+		@Override
+		public Object serialize(IConfig config, Field field, Object value)
+		{
+			final MemoryConfiguration cfg = new MemoryConfiguration();
+
+			final Map<String, ?> map = (Map<String, ?>)value;
+			for (Map.Entry<String, ?> entry : map.entrySet())
+			{
+				final Object v = entry.getValue();
+				cfg.set(entry.getKey(), config.getSerializer(v.getClass()).serialize(config, field, v));
+			}
+
+			return cfg;
+		}
+
+		@Override
+		public Map deserialize(IConfig config, Field field, Object object)
+		{
+			final Map<String, Object> map = new HashMap<>();
+
+			ConfigurationSection cfg = (ConfigurationSection)object;
+			for (String key : cfg.getKeys(false))
+				map.put(key, config.getSerializer(TypeUtil.getParamType(field, 1)).deserialize(config, field, cfg.get(key)));
+
+			return map;
+		}
+	};
 }

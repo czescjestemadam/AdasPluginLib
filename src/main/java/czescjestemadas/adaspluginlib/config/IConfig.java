@@ -35,6 +35,7 @@ public abstract class IConfig
 		addSerializer(List.class, IConfigSerializer.LIST);
 		addSerializer(Optional.class, IConfigSerializer.OPTIONAL);
 		addSerializer(NamedTextColor.class, IConfigSerializer.NAMED_TEXT_COLOR);
+		addSerializer(Map.class, IConfigSerializer.MAP);
 	}
 
 	public void load()
