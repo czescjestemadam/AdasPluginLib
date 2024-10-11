@@ -6,7 +6,7 @@
 
 	<groupId>czescjestemadas</groupId>
 	<artifactId>AdasPluginLib</artifactId>
-	<version>0.3.3</version>
+	<version>0.3.4-dev</version>
 	<packaging>jar</packaging>
 
 	<name>AdasPluginLib</name>
