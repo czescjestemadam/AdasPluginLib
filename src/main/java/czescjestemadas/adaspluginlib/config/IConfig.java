@@ -65,11 +65,19 @@ public abstract class IConfig
 
 	public void save()
 	{
-		final YamlConfiguration config = new YamlConfiguration();
+		save(false);
+	}
+
+	public void save(boolean dflt)
+	{
+		final YamlConfiguration config = dflt ? YamlConfiguration.loadConfiguration(getFile()) : new YamlConfiguration();
 
 		for (Field field : getConfigFields())
 		{
 			final String path = field.getAnnotation(Path.class).value();
+
+			if (dflt && config.contains(path))
+				continue;
 
 			try
 			{
