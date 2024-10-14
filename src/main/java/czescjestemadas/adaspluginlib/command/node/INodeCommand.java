@@ -21,6 +21,9 @@ import java.util.*;
 public abstract class INodeCommand extends ICommand
 {
 	private final Map<Type, ArgParser<?>> parsers = new HashMap<>();
+	private Method rootNode;
+	private Method rootNodeCompleter;
+	private Method helpNode;
 
 	protected INodeCommand(String name)
 	{
@@ -39,6 +42,18 @@ public abstract class INodeCommand extends ICommand
 		addParser(PotionType.class, arg -> EnumUtil.valueOf(PotionType.class, arg));
 		addParser(Particle.class, arg -> EnumUtil.valueOf(Particle.class, arg));
 		addParser(NamedTextColor.class, NamedTextColor.NAMES::value);
+
+		for (Method method : getClass().getMethods())
+		{
+			if (method.isAnnotationPresent(RootNode.class))
+				rootNode = method;
+
+			if (method.isAnnotationPresent(RootNodeCompleter.class))
+				rootNodeCompleter = method;
+
+			if (method.isAnnotationPresent(HelpNode.class))
+				helpNode = method;
+		}
 	}
 
 	@Override
@@ -46,7 +61,6 @@ public abstract class INodeCommand extends ICommand
 	{
 		if (args.length == 0)
 		{
-			final Method rootNode = getRootNode();
 			if (rootNode == null)
 				return false;
 
@@ -109,7 +123,6 @@ public abstract class INodeCommand extends ICommand
 			return true;
 		}
 
-		final Method helpNode = getHelpNode();
 		if (helpNode != null)
 		{
 			final Parameter[] parameters = helpNode.getParameters();
@@ -136,20 +149,19 @@ public abstract class INodeCommand extends ICommand
 	{
 		if (args.length == 1)
 		{
-			final Method completer = getRootNodeCompleter();
-			if (completer == null)
+			if (rootNodeCompleter == null)
 				return List.of();
 
-			final Parameter[] parameters = completer.getParameters();
+			final Parameter[] parameters = rootNodeCompleter.getParameters();
 			if (checkParams(args, new String[0], parameters, true))
 				return List.of();
 
-			if (checkPlayerOnly(sender, completer, false))
+			if (checkPlayerOnly(sender, rootNodeCompleter, false))
 				return List.of();
 
 			try
 			{
-				return (List<String>)completer.invoke(this, sender);
+				return (List<String>)rootNodeCompleter.invoke(this, sender);
 			}
 			catch (IllegalAccessException | InvocationTargetException e)
 			{
@@ -226,39 +238,6 @@ public abstract class INodeCommand extends ICommand
 	protected <T> void addParser(Class<T> cls, ArgParser<T> parser)
 	{
 		parsers.put(cls, parser);
-	}
-
-	private Method getRootNode()
-	{
-		for (Method method : getClass().getMethods())
-		{
-			if (method.isAnnotationPresent(RootNode.class))
-				return method;
-		}
-
-		return null;
-	}
-
-	private Method getHelpNode()
-	{
-		for (Method method : getClass().getMethods())
-		{
-			if (method.isAnnotationPresent(HelpNode.class))
-				return method;
-		}
-
-		return null;
-	}
-
-	private Method getRootNodeCompleter()
-	{
-		for (Method method : getClass().getMethods())
-		{
-			if (method.isAnnotationPresent(RootNodeCompleter.class))
-				return method;
-		}
-
-		return null;
 	}
 
 	/// true - failed
