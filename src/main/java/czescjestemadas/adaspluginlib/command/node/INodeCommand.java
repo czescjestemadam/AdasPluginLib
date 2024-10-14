@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.BiFunction;
 
 public abstract class INodeCommand extends ICommand
 {
@@ -94,7 +95,7 @@ public abstract class INodeCommand extends ICommand
 			if (checkParams(args, nodePathArgs, parameters, false))
 				continue;
 
-			final List<String> nodeStrArgs = fillStrArgsIfMatches(args, nodePathArgs);
+			final List<String> nodeStrArgs = fillStrArgsIfMatches(args, nodePathArgs, node.ignoreCase());
 			if (nodeStrArgs == null)
 				continue;
 
@@ -174,34 +175,29 @@ public abstract class INodeCommand extends ICommand
 
 		for (Method method : getClass().getMethods())
 		{
-			String[] nodePaths = null;
+			NodeCompleter[] completers = null;
 
 			final CompleterNodes completerNodes = method.getAnnotation(CompleterNodes.class);
 			if (completerNodes != null)
-			{
-				final NodeCompleter[] completers = completerNodes.value();
-				nodePaths = new String[completers.length];
-				for (int i = 0; i < completers.length; i++)
-					nodePaths[i] = completers[i].value();
-			}
+				completers = completerNodes.value();
 			else
 			{
 				final NodeCompleter node = method.getAnnotation(NodeCompleter.class);
 				if (node != null)
-					nodePaths = new String[]{node.value()};
+					completers = new NodeCompleter[]{node};
 			}
 
-			if (nodePaths == null)
+			if (completers == null)
 				continue;
 
-			for (String nodePath : nodePaths)
+			for (NodeCompleter completer : completers)
 			{
-				final String[] nodePathArgs = nodePath.split("\\s+");
+				final String[] nodePathArgs = completer.value().split("\\s+");
 				final Parameter[] parameters = method.getParameters();
 				if (checkParams(searchArgs, nodePathArgs, parameters, false))
 					continue;
 
-				final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs);
+				final List<String> nodeStrArgs = fillStrArgsIfMatches(searchArgs, nodePathArgs, completer.ignoreCase());
 				if (nodeStrArgs == null)
 					continue;
 
@@ -259,8 +255,10 @@ public abstract class INodeCommand extends ICommand
 	}
 
 	/// null == not matching
-	private static List<String> fillStrArgsIfMatches(String[] args, String[] nodePathArgs)
+	private static List<String> fillStrArgsIfMatches(String[] args, String[] nodePathArgs, boolean ignoreCase)
 	{
+		final BiFunction<String, String, Boolean> strComparator = ignoreCase ? String::equalsIgnoreCase : String::equals;
+
 		final List<String> nodeStrArgs = new ArrayList<>();
 
 		int argIdx = 0;
@@ -279,7 +277,7 @@ public abstract class INodeCommand extends ICommand
 			{
 				final StringBuilder wide = new StringBuilder();
 
-				while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !args[argIdx].equals(nodePathArgs[nodeArgIdx + 1])))
+				while (argIdx < args.length && (nodeArgIdx + 1 >= nodePathArgs.length || !strComparator.apply(args[argIdx], nodePathArgs[nodeArgIdx + 1])))
 				{
 					if (!wide.isEmpty())
 						wide.append(" ");
@@ -291,7 +289,7 @@ public abstract class INodeCommand extends ICommand
 			// Fixed parts of the pattern
 			else
 			{
-				if (argIdx < args.length && nodePathArgs[nodeArgIdx].equals(args[argIdx]))
+				if (argIdx < args.length && strComparator.apply(nodePathArgs[nodeArgIdx], args[argIdx]))
 					argIdx++;
 				else
 					return null;
