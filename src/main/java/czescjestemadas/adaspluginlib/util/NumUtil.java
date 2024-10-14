@@ -11,4 +11,28 @@ public abstract class NumUtil
 	{
 		return val.compareTo(min) < 0 ? min : val.compareTo(max) > 0 ? max : val;
 	}
+
+	public static int parseIntOr(String str, int dflt)
+	{
+		try
+		{
+			return Integer.parseInt(str);
+		}
+		catch (NumberFormatException e)
+		{
+			return dflt;
+		}
+	}
+
+	public static double parseDoubleOr(String str, double dflt)
+	{
+		try
+		{
+			return Double.parseDouble(str);
+		}
+		catch (NumberFormatException e)
+		{
+			return dflt;
+		}
+	}
 }
