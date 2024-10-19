@@ -9,6 +9,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,10 +100,15 @@ public abstract class IConfig
 		{
 			config.save(getFile());
 		}
-		catch (IOException e)
+		catch (IOException | YAMLException e)
 		{
-			plugin.getSLF4JLogger().error("cannot save {}", filename);
+			plugin.getSLF4JLogger().error("cannot save {}", filename, e);
 		}
+	}
+
+	public String getFilename()
+	{
+		return filename;
 	}
 
 	protected IConfigSerializer<?> getSerializer(Type type)
