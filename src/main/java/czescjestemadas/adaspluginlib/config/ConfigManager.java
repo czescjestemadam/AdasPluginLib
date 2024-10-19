@@ -1,5 +1,6 @@
 package czescjestemadas.adaspluginlib.config;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +24,11 @@ public class ConfigManager
 	{
 		for (IConfig config : configs.values())
 			config.save();
+	}
+
+	public Collection<? extends IConfig> getConfigs()
+	{
+		return configs.values();
 	}
 
 	public <T extends IConfig> T get(Class<T> cls)

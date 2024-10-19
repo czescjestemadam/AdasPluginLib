@@ -67,7 +67,7 @@ public interface IConfigSerializer<T>
 		@Override
 		public Material deserialize(IConfig config, Field field, Object object)
 		{
-			return Material.getMaterial(String.valueOf(object));
+			return Material.matchMaterial(String.valueOf(object));
 		}
 	};
 
@@ -132,7 +132,6 @@ public interface IConfigSerializer<T>
 	};
 
 	IConfigSerializer<List> LIST = new IConfigSerializer<>()
-
 	{
 		@Override
 		public Object serialize(IConfig config, Field field, Object value)
@@ -195,7 +194,7 @@ public interface IConfigSerializer<T>
 			for (Map.Entry<String, ?> entry : map.entrySet())
 			{
 				final Object v = entry.getValue();
-				cfg.set(entry.getKey(), config.getSerializer(v.getClass()).serialize(config, field, v));
+				cfg.set(entry.getKey(), config.getSerializer(TypeUtil.getParamType(field, 1)).serialize(config, field, v));
 			}
 
 			return cfg;
