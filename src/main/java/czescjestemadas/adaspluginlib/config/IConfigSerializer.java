@@ -67,7 +67,7 @@ public interface IConfigSerializer<T>
 		@Override
 		public Material deserialize(IConfig config, Field field, Object object)
 		{
-			return Material.getMaterial(String.valueOf(object));
+			return Material.matchMaterial(String.valueOf(object));
 		}
 	};
 
