@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffectType;
@@ -41,8 +42,11 @@ public abstract class IConfig
 
 	public void load()
 	{
-		final YamlConfiguration config = YamlConfiguration.loadConfiguration(getFile());
+		load(YamlConfiguration.loadConfiguration(getFile()));
+	}
 
+	public void load(ConfigurationSection config)
+	{
 		for (Field field : getConfigFields())
 		{
 			final String path = field.getAnnotation(Path.class).value();
@@ -67,10 +71,17 @@ public abstract class IConfig
 
 	public void save()
 	{
-		save(false);
+		try
+		{
+			save(false).save(getFile());
+		}
+		catch (IOException | YAMLException e)
+		{
+			plugin.getSLF4JLogger().error("cannot save {}", filename, e);
+		}
 	}
 
-	public void save(boolean dflt)
+	public YamlConfiguration save(boolean dflt)
 	{
 		final YamlConfiguration config = dflt ? YamlConfiguration.loadConfiguration(getFile()) : new YamlConfiguration();
 
@@ -96,14 +107,7 @@ public abstract class IConfig
 			}
 		}
 
-		try
-		{
-			config.save(getFile());
-		}
-		catch (IOException | YAMLException e)
-		{
-			plugin.getSLF4JLogger().error("cannot save {}", filename, e);
-		}
+		return config;
 	}
 
 	public String getFilename()
