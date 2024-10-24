@@ -1,5 +1,7 @@
 package czescjestemadas.adaspluginlib.util;
 
+import java.util.Collection;
+
 public abstract class NumUtil
 {
 	public static <T extends Comparable<T>> boolean isInRange(T val, T min, T max)
@@ -34,5 +36,15 @@ public abstract class NumUtil
 		{
 			return dflt;
 		}
+	}
+
+	public static double avg(Collection<? extends Number> numbers)
+	{
+		double sum = 0;
+
+		for (Number number : numbers)
+			sum += number.doubleValue();
+
+		return numbers.isEmpty() ? 0 : sum / numbers.size();
 	}
 }
