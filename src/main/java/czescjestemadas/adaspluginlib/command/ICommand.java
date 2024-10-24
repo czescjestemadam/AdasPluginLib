@@ -8,10 +8,17 @@ import java.util.List;
 public abstract class ICommand implements TabExecutor
 {
 	protected final String name;
+	protected final String permission;
 
 	protected ICommand(String name)
 	{
+		this(name, null);
+	}
+
+	protected ICommand(String name, String permission)
+	{
 		this.name = name;
+		this.permission = permission;
 	}
 
 	public String getName()
