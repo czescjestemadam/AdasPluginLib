@@ -1,5 +1,6 @@
 package czescjestemadas.adaspluginlib.config;
 
+import czescjestemadas.adaspluginlib.util.ComponentTemplate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -38,6 +39,7 @@ public abstract class IConfig
 		addSerializer(Optional.class, IConfigSerializer.OPTIONAL);
 		addSerializer(NamedTextColor.class, IConfigSerializer.NAMED_TEXT_COLOR);
 		addSerializer(Map.class, IConfigSerializer.MAP);
+		addSerializer(ComponentTemplate.class, IConfigSerializer.COMPONENT_TEMPLATE);
 	}
 
 	public void load()

@@ -1,5 +1,6 @@
 package czescjestemadas.adaspluginlib.config;
 
+import czescjestemadas.adaspluginlib.util.ComponentTemplate;
 import czescjestemadas.adaspluginlib.util.EnumUtil;
 import czescjestemadas.adaspluginlib.util.TypeUtil;
 import net.kyori.adventure.text.Component;
@@ -210,6 +211,21 @@ public interface IConfigSerializer<T>
 				map.put(key, config.getSerializer(TypeUtil.getParamType(field, 1)).deserialize(config, field, cfg.get(key)));
 
 			return map;
+		}
+	};
+
+	IConfigSerializer<ComponentTemplate> COMPONENT_TEMPLATE = new IConfigSerializer<>()
+	{
+		@Override
+		public Object serialize(IConfig config, Field field, Object value)
+		{
+			return value.toString();
+		}
+
+		@Override
+		public ComponentTemplate deserialize(IConfig config, Field field, Object object)
+		{
+			return ComponentTemplate.of((String)object);
 		}
 	};
 }
