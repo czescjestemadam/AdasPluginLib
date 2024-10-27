@@ -28,7 +28,12 @@ public abstract class INodeCommand extends ICommand
 
 	protected INodeCommand(String name)
 	{
-		super(name);
+		this(name, null);
+	}
+
+	protected INodeCommand(String name, String permission)
+	{
+		super(name, permission);
 		addParser(Integer.class, Integer::parseInt);
 		addParser(int.class, Integer::parseInt);
 		addParser(Float.class, Float::parseFloat);

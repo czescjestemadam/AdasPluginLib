@@ -3,6 +3,7 @@ package czescjestemadas.adaspluginlib.item;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import java.util.List;
@@ -33,10 +34,20 @@ public class ItemBuilder
 		return this;
 	}
 
+	public ItemBuilder meta(Consumer<ItemMeta> func)
+	{
+		return meta(ItemMeta.class, func);
+	}
+
+	public <T extends ItemMeta> ItemBuilder meta(Class<T> metaClass, Consumer<T> func)
+	{
+		item.editMeta(metaClass, func);
+		return this;
+	}
+
 	public ItemBuilder name(Component component)
 	{
-		item.editMeta(meta -> meta.displayName(component));
-		return this;
+		return meta(meta -> meta.displayName(component));
 	}
 
 	public ItemBuilder lore(Component... components)
@@ -46,25 +57,22 @@ public class ItemBuilder
 
 	public ItemBuilder lore(List<Component> components)
 	{
-		item.editMeta(meta -> meta.lore(components));
-		return this;
+		return meta(meta -> meta.lore(components));
 	}
 
 	public ItemBuilder appendLore(Component component)
 	{
-		item.editMeta(meta -> {
+		return meta(meta -> {
 			if (meta.lore() == null)
 				meta.lore(List.of(component));
 			else
 				meta.lore().add(component);
 		});
-		return this;
 	}
 
 	public ItemBuilder pdc(Consumer<PersistentDataContainer> func)
 	{
-		item.editMeta(meta -> func.accept(meta.getPersistentDataContainer()));
-		return this;
+		return meta(meta -> func.accept(meta.getPersistentDataContainer()));
 	}
 
 	public ItemStack build()

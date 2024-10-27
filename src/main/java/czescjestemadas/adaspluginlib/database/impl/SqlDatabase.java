@@ -144,7 +144,7 @@ public abstract class SqlDatabase implements Database
 		final List<Map.Entry<String, Object>> valueEntries = new ArrayList<>(values.entrySet());
 
 		final String sql = "UPDATE " + query.getModelClass().getAnnotation(DBTable.class).value() +
-				"SET " + valueEntries.stream().map(e -> e.getKey() + " = ?").collect(Collectors.joining(", "));
+				" SET " + valueEntries.stream().map(e -> e.getKey() + " = ?").collect(Collectors.joining(", "));
 
 		try (final PreparedStatement statement = query.buildSqlQuery(sql, connection))
 		{

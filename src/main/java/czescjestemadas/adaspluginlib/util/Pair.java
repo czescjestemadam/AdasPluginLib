@@ -13,6 +13,11 @@ public class Pair<A, B>
 		this.b = b;
 	}
 
+	public boolean hasA()
+	{
+		return a != null;
+	}
+
 	public A getA()
 	{
 		return a;
@@ -23,6 +28,11 @@ public class Pair<A, B>
 		this.a = a;
 	}
 
+	public boolean hasB()
+	{
+		return b != null;
+	}
+
 	public B getB()
 	{
 		return b;
@@ -31,6 +41,16 @@ public class Pair<A, B>
 	public void setB(B b)
 	{
 		this.b = b;
+	}
+
+	public boolean isEmpty()
+	{
+		return !hasA() && !hasB();
+	}
+
+	public boolean isFull()
+	{
+		return hasA() && hasB();
 	}
 
 	@Override
@@ -61,5 +81,10 @@ public class Pair<A, B>
 	public static <T, R> Pair<T, R> of(T a, R b)
 	{
 		return new Pair<>(a, b);
+	}
+
+	public static <T, R> Pair<T, R> empty()
+	{
+		return new Pair<>(null, null);
 	}
 }

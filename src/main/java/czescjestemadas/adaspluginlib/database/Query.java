@@ -1,6 +1,6 @@
 package czescjestemadas.adaspluginlib.database;
 
-import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +12,8 @@ public class Query<T extends DBModel>
 {
 	private final Class<T> modelClass;
 	private final List<Entry> entries = new ArrayList<>();
+	private String orderBy;
+	private int limit = 0;
 
 	public Query(Class<T> modelClass)
 	{
@@ -36,7 +38,10 @@ public class Query<T extends DBModel>
 
 	public PreparedStatement buildSqlQuery(String prefix, Connection connection) throws SQLException
 	{
-		StringBuilder sql = new StringBuilder();
+		final StringBuilder sql = new StringBuilder(prefix);
+
+		if (!entries.isEmpty())
+			sql.append(" WHERE ");
 
 		for (int i = 0; i < entries.size(); i++)
 		{
@@ -49,12 +54,28 @@ public class Query<T extends DBModel>
 			sql.append(entry.fieldName).append(entry.compareMethod.sql).append("?");
 		}
 
-		final PreparedStatement statement = connection.prepareStatement(sql.isEmpty() ? prefix : prefix + " WHERE " + sql);
+		if (orderBy != null)
+			sql.append(" ORDER BY ").append(orderBy);
 
-		for (int i = 0; i < entries.size(); i++)
-			statement.setObject(i + 1, entries.get(i).value);
+		if (limit > 0)
+			sql.append(" LIMIT ").append(limit);
 
-		return statement;
+		final String sqlString = sql.toString();
+
+		try
+		{
+			final PreparedStatement statement = connection.prepareStatement(sqlString);
+
+			for (int i = 0; i < entries.size(); i++)
+				statement.setObject(i + 1, entries.get(i).value);
+
+			return statement;
+		}
+		catch (SQLException e)
+		{
+			JavaPlugin.getProvidingPlugin(modelClass).getSLF4JLogger().error("sql: {}", sqlString);
+			throw e;
+		}
 	}
 
 
@@ -202,6 +223,19 @@ public class Query<T extends DBModel>
 		public Builder<R> orGreaterEquals(String fieldName, Object value)
 		{
 			query.withEntry(new Entry(EntryJoinMethod.OR, fieldName, CompareMethod.GREATER_EQUALS, value));
+			return this;
+		}
+
+
+		public Builder<R> orderBy(String column)
+		{
+			query.orderBy = column;
+			return this;
+		}
+
+		public Builder<R> limit(int limit)
+		{
+			query.limit = limit;
 			return this;
 		}
 
